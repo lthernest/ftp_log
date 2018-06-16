@@ -1,3 +1,6 @@
+# set the directory first! Move the ftp_log.txt to the folder
+
+
 # fill = TRUE - fill in empty spaces
 log_data <- read.table("ftp_log.txt", header = FALSE, fill = TRUE)
 
@@ -5,13 +8,17 @@ log_data <- read.table("ftp_log.txt", header = FALSE, fill = TRUE)
 dim(log_data)
 
 # add the header names
-colnames(log_data) <- c("week", "mm", "dd", "tt", "yy")
+colnames(log_data) <- c("week", "mm", "dd", "tt", "yy", "speed","ip","size", "doi", "NA", "NA", "NA", "NA","NA", "NA","NA", "NA","fin")
+
 
 yy <- log_data$yy
 dd <- log_data$dd
 # convert the month to number
 mm <- log_data$mm
 mm <- match(mm,month.abb)
+ip <- log_data$ip
+fin <- log_data$fin
+
 
 # merging year, month and day, display with the date format
 dates <-as.Date(paste(yy, mm, dd, sep="-"), format="%Y-%m-%d")
@@ -30,7 +37,9 @@ count <-function(month,year){
   return(count_month)
 }
 
-# data
+
+# data between 2017 and 2018
+
 y_2018 <- c(count('Jan', 2018), count('Feb', 2018), count('Mar', 2018), count('Apr', 2018), count('May', 2018), count('Jun', 2018), count('Jul',2018), count('Aug',2018), count('Sep',2018), count('Oct',2018), count('Nov',2018), count('Dec',2018))
 
 y_2017 <- c(count('Jan', 2017), count('Feb', 2017), count('Mar', 2017), count('Apr', 2017), count('May', 2017), count('Jun', 2017), count('Jul',2017), count('Aug',2017), count('Sep',2017), count('Oct',2017), count('Nov',2017), count('Dec',2017))
@@ -50,3 +59,32 @@ library(ggplot2)
 
 p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Count") + ggtitle("Number of files downloaded per month") + theme_bw()
 p
+
+# to search if ftp_log contain parrot ip address '192.168.44.247'
+'192.168.44.247' %in% ip
+
+# to exclude all the incompete download, i.e. fin = "i"
+complete_log_data <- subset(log_data, fin!="i")
+
+#########try to work with APIs in R#############
+#install.packages("httr")
+#require("httr")
+
+#install.packages("jsonlite")
+#require("jsonlite")
+
+# location field parameters
+#base <- "https://ipapi.co"
+#call1 <- paste(base,ip,"country", sep="/")
+#get_country <- GET(call1)
+############################################
+
+
+# to generate country names of ip
+install.packages("rgeolocate")
+library(rgeolocate)
+
+ipmmdb <- system.file("extdata","GeoLite2-Country.mmdb", package = "rgeolocate")
+ip_country <- maxmind(complete_log_data$ip, ipmmdb,"country_name")
+country_list <- data.frame(table(ip_country))
+ggplot(country_list, aes(x=ip_country, y=Freq)) + geom_bar(stat="identity") + labs(x="Country", y="Frequency")
