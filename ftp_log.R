@@ -88,3 +88,10 @@ ipmmdb <- system.file("extdata","GeoLite2-Country.mmdb", package = "rgeolocate")
 ip_country <- maxmind(complete_log_data$ip, ipmmdb,"country_name")
 country_list <- data.frame(table(ip_country))
 ggplot(country_list, aes(x=ip_country, y=Freq)) + geom_bar(stat="identity") + labs(x="Country", y="Frequency")
+
+# map visualization
+install.packages("rworldmap")
+library(rworldmap)
+joinmap <- joinCountryData2Map(country_list, joinCode="NAME", nameJoinColumn="ip_country")
+mapCountryData(joinmap, nameColumnToPlot="Freq", mapTitle="World", catMethod='fixedWidth')
+
