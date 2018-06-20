@@ -98,12 +98,15 @@ write.csv(complete_country_list, file="complete_country_list.csv")
 write.csv(incomplete_country_list, file="incomplete_country_list.csv")
 
 # barchart
-ggplot(country_list, aes(x=ip_country, y=Freq)) + geom_bar(stat="identity") + labs(x="Country", y="Frequency")
+ggplot(complete_country_list, aes(x=ip_country, y=Freq)) + geom_bar(stat="identity") + labs(x="Country", y="Frequency")
 
 
 # map visualization
 install.packages("rworldmap")
 library(rworldmap)
-joinmap <- joinCountryData2Map(country_list, joinCode="NAME", nameJoinColumn="ip_country")
-mapCountryData(joinmap, nameColumnToPlot="Freq", mapTitle="World", catMethod='fixedWidth')
+join_complete_map <- joinCountryData2Map(complete_country_list, joinCode="NAME", nameJoinColumn="complete_ip_country")
+mapCountryData(join_complete_map, nameColumnToPlot="Freq", mapTitle="Completed file download results organised by countries", catMethod='fixedWidth')
+
+join_incomplete_map <- joinCountryData2Map(incomplete_country_list, joinCode="NAME", nameJoinColumn="incomplete_ip_country")
+mapCountryData(join_incomplete_map, nameColumnToPlot="Freq", mapTitle="Incompleted file download results organised by countries", catMethod='fixedWidth')
 
