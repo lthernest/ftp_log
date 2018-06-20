@@ -10,7 +10,6 @@ dim(log_data)
 # add the header names
 colnames(log_data) <- c("week", "mm", "dd", "tt", "yy", "speed","ip","size", "doi", "NA", "NA", "NA", "NA","NA", "NA","NA", "NA","fin")
 
-
 yy <- log_data$yy
 dd <- log_data$dd
 # convert the month to number
@@ -18,7 +17,6 @@ mm <- log_data$mm
 mm <- match(mm,month.abb)
 ip <- log_data$ip
 fin <- log_data$fin
-
 
 # merging year, month and day, display with the date format
 dates <-as.Date(paste(yy, mm, dd, sep="-"), format="%Y-%m-%d")
@@ -33,15 +31,13 @@ count <-function(month,year){
 # sum(mm_factor =='Feb')
 # change the value to factor for counting
   mm_factor <- factor(log_data$mm)
-  count_month <- sum(mm_factor == month & yy==year)
+  count_month <- sum(mm_factor == month & yy == year)
   return(count_month)
 }
 
 
 # data between 2017 and 2018
-
 y_2018 <- c(count('Jan', 2018), count('Feb', 2018), count('Mar', 2018), count('Apr', 2018), count('May', 2018), count('Jun', 2018), count('Jul',2018), count('Aug',2018), count('Sep',2018), count('Oct',2018), count('Nov',2018), count('Dec',2018))
-
 y_2017 <- c(count('Jan', 2017), count('Feb', 2017), count('Mar', 2017), count('Apr', 2017), count('May', 2017), count('Jun', 2017), count('Jul',2017), count('Aug',2017), count('Sep',2017), count('Oct',2017), count('Nov',2017), count('Dec',2017))
 
 # assign the label of x-axis
@@ -61,10 +57,13 @@ p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) 
 p
 
 # to search if ftp_log contain parrot ip address '192.168.44.247'
-'192.168.44.247' %in% ip
+'120.79.135.86' %in% ip
 
-# to exclude all the incompete download, i.e. fin = "i"
-complete_log_data <- subset(log_data, fin!="i")
+# to exclude all the ip = '120.79.135.86'
+ip_log_data <- subset(log_data, ip!="120.79.135.86")
+
+complete_log_data <- ip_log_data[which(ip_log_data$fin == "c"),]
+incomplete_log_data <- ip_log_data[which(ip_log_data$fin == "i"),]
 
 #########try to work with APIs in R#############
 #install.packages("httr")
@@ -85,9 +84,22 @@ install.packages("rgeolocate")
 library(rgeolocate)
 
 ipmmdb <- system.file("extdata","GeoLite2-Country.mmdb", package = "rgeolocate")
-ip_country <- maxmind(complete_log_data$ip, ipmmdb,"country_name")
-country_list <- data.frame(table(ip_country))
+
+# list for complete download
+complete_ip_country <- maxmind(complete_log_data$ip, ipmmdb,"country_name")
+complete_country_list <- data.frame(table(complete_ip_country))
+
+# list for incomplete download
+incomplete_ip_country <- maxmind(incomplete_log_data$ip, ipmmdb,"country_name")
+incomplete_country_list <- data.frame(table(incomplete_ip_country))
+
+#export to csv
+write.csv(complete_country_list, file="complete_country_list.csv")
+write.csv(incomplete_country_list, file="incomplete_country_list.csv")
+
+# barchart
 ggplot(country_list, aes(x=ip_country, y=Freq)) + geom_bar(stat="identity") + labs(x="Country", y="Frequency")
+
 
 # map visualization
 install.packages("rworldmap")
