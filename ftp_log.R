@@ -12,9 +12,11 @@ colnames(log_data) <- c("week", "mm", "dd", "tt", "yy", "speed","ip","size", "do
 
 yy <- log_data$yy
 dd <- log_data$dd
+
 # convert the month to number
 mm <- log_data$mm
 mm <- match(mm,month.abb)
+
 ip <- log_data$ip
 fin <- log_data$fin
 
@@ -26,7 +28,7 @@ min(dates, na.rm=TRUE)
 # date of the last file download, remove NA value
 max(dates, na.rm=TRUE)
 
-# create a function to count no of row per month
+# create a function to count no. of row per month
 count <-function(month,year){
 # sum(mm_factor =='Feb')
 # change the value to factor for counting
@@ -45,18 +47,15 @@ x <- rep(c("Jan", "Feb", "Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov",
 
 # to keep the order of x-axis in data.frame
 x1 <- factor(x, levels=x)
-
 values <- c(y_2017, y_2018)
 type <-c(rep("2017", 12), rep("2018", 12))
 dl <- data.frame(x1,values)
 
 # load in `ggplot2`
 library(ggplot2)
-
 p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Count") + ggtitle("Number of files downloaded per month") + theme_bw()
-p
 
-# to search if ftp_log contain parrot ip address '192.168.44.247'
+# to search if ftp_log contain parrot ip address
 '120.79.135.86' %in% ip
 
 # to exclude all the ip = '120.79.135.86'
