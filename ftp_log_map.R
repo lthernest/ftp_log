@@ -24,7 +24,7 @@ ipmmdb <- system.file("extdata","GeoLite2-Country.mmdb", package = "rgeolocate")
 # matching country ip
 complete_ip_country <- maxmind(complete_log_data$ip, ipmmdb,"country_name")
 
-# matching result
+# match result
 complete_country_list <- data.frame(complete_log_data$ip, complete_ip_country)
 
 ip_result <- data.frame(table(complete_ip_country))
