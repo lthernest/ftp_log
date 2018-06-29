@@ -57,9 +57,8 @@ dl <- data.frame(x1,values)
 
 # load in `ggplot2`
 library(ggplot2)
-p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Count") + ggtitle("Number of files downloaded per month") + theme_bw()
-p
-
+p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Number of completed files downloaded per month") + theme_bw()
+ggsave("montly_dl.png", width=8, dpi=100)
 
 ##########generate country names of ip using rgeolocate##########
 install.packages("rgeolocate")
@@ -138,8 +137,14 @@ ggplot(total_ip, aes(x=total_ip$complete_ip_country, y=Freq)) + geom_bar(stat="i
 install.packages("rworldmap")
 library(rworldmap)
 join_complete_map <- joinCountryData2Map(total_ip, joinCode="NAME", nameJoinColumn="complete_ip_country")
-mapCountryData(join_complete_map, nameColumnToPlot="Freq", mapTitle="Completed file download results organised by countries", catMethod='fixedWidth')
+rmap <- mapCountryData(join_complete_map, nameColumnToPlot="Freq", mapTitle="Completed file download results organised by countries", catMethod='fixedWidth')
 
+##########map visualization using googleVis##########
+install.packages("googleVis")
+library(googleVis)
+gvismap <- gvisGeoChart(total_ip, locationvar = "complete_ip_country", colorvar="Freq", options=list(width="80%", height="80%"))
+plot(gvismap)
+print(gvismap)
 
 ##########list for incomplete download##########
 incomplete_log_data <- ip_log_data[which(ip_log_data$fin == "i"),]
