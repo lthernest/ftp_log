@@ -127,7 +127,10 @@ total_ip <- rbind(ip_result, na_ip_result)
 # aggregate the total ip result
 total_ip_result <- ddply(total_ip, 'total_ip$complete_ip_country', numcolwise(sum))
 
-#export as csv
+# top 10 countries with most frequent complete download
+head(total_ip_result[order(-total_ip_result$Freq),],10)
+
+# export as csv
 write.csv(total_ip_result, file="total_ip_result.csv")
 
 
@@ -136,12 +139,6 @@ install.packages("ggplot2")
 library(ggplot2)
 ggplot(total_ip, aes(x=total_ip$complete_ip_country, y=Freq)) + geom_bar(stat="identity") + labs(x="Country", y="Frequency")
 
-
-##########map visualization using rworldmap##########
-install.packages("rworldmap")
-library(rworldmap)
-join_complete_map <- joinCountryData2Map(total_ip, joinCode="NAME", nameJoinColumn="complete_ip_country")
-rmap <- mapCountryData(join_complete_map, nameColumnToPlot="Freq", mapTitle="Completed file download results organised by countries", catMethod='fixedWidth')
 
 ##########map visualization using googleVis##########
 install.packages("googleVis")
@@ -157,7 +154,7 @@ incomplete_log_data <- ip_log_data[which(ip_log_data$fin == "i"),]
 incomplete_ip_country <- maxmind(incomplete_log_data$ip, ipmmdb,"country_name")
 incomplete_country_list <- data.frame(table(incomplete_ip_country))
 
-# show the country with incomplete download in descending order
+# show the countries with incomplete download in descending order
 incomplete_country_list[order((incomplete_country_list$Freq), decreasing =TRUE),]
 # China has the most incomplete downloads - 4,046,925
 
