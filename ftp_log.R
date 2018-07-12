@@ -56,8 +56,13 @@ type <-c(rep("2017", 12), rep("2018", 12))
 dl <- data.frame(x1,values)
 
 # load in `ggplot2`
+install.packages("ggplot2")
 library(ggplot2)
 p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Number of completed files downloaded per month") + theme_bw()
+<<<<<<< HEAD
+=======
+p
+>>>>>>> 79f913c3a32c5b7bafa8db067afe781101c481a9
 ggsave("montly_dl.png", width=8, dpi=100)
 
 ##########generate country names of ip using rgeolocate##########
@@ -78,15 +83,16 @@ install.packages("plyr")
 library(plyr)
 
 count(complete_country_list$country_name == "NA")
+# 3673 entries are NA using rgeolocate package
 
 # display the entries that country name is NA
 na_ip_url <- complete_country_list[complete_country_list$country_name %in% NA,]
 na_ip <-na_ip_url$complete_log_data.ip
 group_na_ip <- count(na_ip)
 
-##########generate country names of ip using API##########
+##########generate country names of NA ip using API##########
 install.packages("httr")
-require("httr")
+library("httr")
 
 # location field parameters
 base <- "https://ipapi.co"
@@ -118,12 +124,16 @@ na_ip_result <- ddply(na_country_list, 'na_country_list$country_vec', numcolwise
 
 colnames(na_ip_result) <- c("complete_ip_country", "Freq")
 
-# merge the total complete download result
+# combine the total complete download result
 total_ip <- rbind(ip_result, na_ip_result)
 
 # aggregate the total ip result
 total_ip_result <- ddply(total_ip, 'total_ip$complete_ip_country', numcolwise(sum))
 
+# top 10 countries with most frequent complete download
+head(total_ip_result[order(-total_ip_result$Freq),],10)
+
+# export as csv
 write.csv(total_ip_result, file="total_ip_result.csv")
 
 
@@ -133,6 +143,7 @@ library(ggplot2)
 ggplot(total_ip, aes(x=total_ip$complete_ip_country, y=Freq)) + geom_bar(stat="identity") + labs(x="Country", y="Frequency")
 
 
+<<<<<<< HEAD
 ##########map visualization using rworldmap##########
 install.packages("rworldmap")
 library(rworldmap)
@@ -144,12 +155,25 @@ install.packages("googleVis")
 library(googleVis)
 gvismap <- gvisGeoChart(total_ip, locationvar = "complete_ip_country", colorvar="Freq", options=list(width="80%", height="80%"))
 plot(gvismap)
+=======
+##########map visualization using googleVis##########
+install.packages("googleVis")
+library(googleVis)
+gvismap <- gvisGeoChart(total_ip_result, locationvar = "total_ip$complete_ip_country", colorvar="Freq", options=list(width="80%", height="80%"))
+plot(gvismap)
+
+#export the html coding
+>>>>>>> 79f913c3a32c5b7bafa8db067afe781101c481a9
 print(gvismap)
 
 ##########list for incomplete download##########
 incomplete_log_data <- ip_log_data[which(ip_log_data$fin == "i"),]
 incomplete_ip_country <- maxmind(incomplete_log_data$ip, ipmmdb,"country_name")
 incomplete_country_list <- data.frame(table(incomplete_ip_country))
+
+# show the countries with incomplete download in descending order
+incomplete_country_list[order((incomplete_country_list$Freq), decreasing =TRUE),]
+# China has the most incomplete downloads - 4,046,925
 
 # export to csv
 write.csv(incomplete_country_list, file="incomplete_country_list.csv")
