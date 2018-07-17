@@ -69,78 +69,30 @@ ggsave("montly_dl.png", width=8, dpi=100)
 
 
 ##########dissecting data for analysis##########
-
-# data in 2017
-log_data_2017 <- pub_complete_log_data[which(pub_complete_log_data$yy == "2017"),]
-
-##########data in 2017 Dec##############
-log_data_2017Dec <- log_data_2017[which(log_data_2017$mm =="12"),]
-
-
 # to count the row contain "/pub"
-sum(grepl("/pub",log_data_2017Dec$doi))
+# sum(grepl("/pub",log_data_2017Dec$doi))
 
-# separate the doi value
-install.packages("stringr")
-library(stringr)
-doi_log_data_2017Dec <- str_split_fixed(log_data_2017Dec$doi, "/", 6)
-colnames(doi_log_data_2017Dec) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
-
-# switch matrix to a data frame
-doi2_log_data_2017Dec <- as.data.frame(doi_log_data_2017Dec)
-
-# Top list for folder download
-Freq_2017Dec <- table(doi2_log_data_2017Dec$doi2)
-Freq_2017Dec <- as.data.frame(Freq_2017Dec)
-head(Freq_2017Dec[order(-Freq_2017Dec$Freq),],10)
-
+# Create a function to find the popular dataset by year and month
 top10pub <- function(month,year){
+  
+  # locate the data with corresponding year and month
   log_data_year_month <- pub_complete_log_data[which(pub_complete_log_data$yy == year & pub_complete_log_data$mm == month),]
+  
+  # extract doi
   library(stringr)
   doi_log_data_year_month <- str_split_fixed(log_data_year_month$doi, "/", 6)
   colnames(doi_log_data_year_month) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
   doi2_log_data_year_month <- as.data.frame(doi_log_data_year_month)
-  # Top 10 list for folder download
+  
+  # Top 10 list for publication download
   Freq_year_month <- table(doi2_log_data_year_month$doi2)
   Freq_year_month <- as.data.frame(Freq_year_month)
   Freq_year_month <- head(Freq_year_month[order(-Freq_year_month$Freq),],10)
+  
+  year_month <- paste(year, month, sep = "-")
+  colnames(Freq_year_month) <- c(year_month, "Freq")
   return(Freq_year_month)
 }
-  
-  
-
-
-
-# Top list for publication
-freq_doi_2017Apr <- table(doi2_log_data_2017Apr$doi2)
-freq_doi_2017Apr <- as.data.frame(freq_doi_2017Apr)
-head(freq_doi_2017Apr[order(-freq_doi_2017Apr$Freq),],10)
-
-##########data in 2017 Sep##########
-log_data_2017Sep <- log_data_2017[which(log_data_2017$mm =="Sep"),]
-
-# separate the doi value
-install.packages("stringr")
-library(stringr)
-doi_log_data_2017Sep <- str_split_fixed(log_data_2017Sep$doi, "/", 6)
-colnames(doi_log_data_2017Sep) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
-
-# switch matrix to a data frame
-doi2_log_data_2017Sep <- as.data.frame(doi_log_data_2017Sep)
-
-# Top list for folder download
-test_2017Sep <- table(doi2_log_data_2017Sep$V2)
-test_2017Sep <- as.data.frame(test_2017Sep)
-head(test_2017Sep[order(-test_2017Sep$Freq),],10)
-
-# Top list for publication
-freq_doi_2017Apr <- table(doi2_log_data_2017Apr$doi2)
-freq_doi_2017Apr <- as.data.frame(freq_doi_2017Apr)
-
-head(freq_doi_2017Apr[order(-freq_doi_2017Apr$Freq),],10)
-
-
-
 
 ##########generate country names of ip using rgeolocate##########
 install.packages("rgeolocate")
