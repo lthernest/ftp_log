@@ -5,57 +5,111 @@ log_data <- read.table("ftp_log.txt", header = FALSE, fill = TRUE)
 
 # add the header names
 colnames(log_data) <- c("week", "mm", "dd", "tt", "yy", "speed","ip","size", "doi", "NA", "NA", "NA", "NA","NA", "NA","NA", "NA","fin")
-ip <- log_data$ip
-fin <- log_data$fin
-yy <- log_data$yy
-dd <- log_data$dd
 
-# convert the month to number
-mm <- log_data$mm
-mm <- match(mm,month.abb)
-
-# merging year, month and day, display with the date format
-dates <-as.Date(paste(yy, mm, dd, sep="-"), format="%Y-%m-%d")
-
-# date of the first file download, remove NA value
-min(dates, na.rm=TRUE)
-# date of the last file download, remove NA value
-max(dates, na.rm=TRUE)
-
-##########complete download per month############
+##########data cleaning############
 # to search if ftp_log contain parrot ip address
 '120.79.135.86' %in% ip
 
 # to exclude all the parrot ip rows
 ip_log_data <- subset(log_data, ip!="120.79.135.86")
 
+# complete download per month
 complete_log_data <- ip_log_data[which(ip_log_data$fin == "c"),]
+
+# convert the month to number
+complete_log_data$mm <- match(complete_log_data$mm,month.abb)
+
+# find the records under /pub directory only
+install.packages("stringr")
+install.packages("dplyr")
+
+library(stringr)
+library(dplyr)
+
+pub_complete_log_data <- complete_log_data %>% filter(str_detect(complete_log_data$doi, "/pub"))
+
+##########monthly download##########
+
+# merging year, month and day, display with the date format
+dates <-as.Date(paste(pub_complete_log_data$yy, pub_complete_log_data$mm, pub_complete_log_data$dd, sep="-"), format="%Y-%m-%d")
+
+# date of the first file download, remove NA value
+min(dates, na.rm=TRUE)
+# date of the last file download, remove NA value
+max(dates, na.rm=TRUE)
+
+# create a function to count no. of row per month
+count_no <-function(month,year){
+  
+  # change the value to factor for counting
+  mm_factor <- factor(pub_complete_log_data$mm)
+  count_month <- sum(mm_factor == month & pub_complete_log_data$yy == year)
+  return(count_month)
+}
+
+# data between 2017 and 2018
+y_2018 <- c(count_no('1', 2018), count_no('2', 2018), count_no('3', 2018), count_no('4', 2018), count_no('5', 2018), count_no('6', 2018), count_no('7',2018), count_no('8',2018), count_no('9',2018), count_no('10',2018), count_no('11',2018), count_no('12',2018))
+y_2017 <- c(count_no('1', 2017), count_no('2', 2017), count_no('3', 2017), count_no('4', 2017), count_no('5', 2017), count_no('6', 2017), count_no('7',2017), count_no('8',2017), count_no('9',2017), count_no('10',2017), count_no('11',2017), count_no('12',2017))
+
+# assign the label of x-axis
+x <- rep(c("Jan", "Feb", "Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec"))
+
+# to keep the order of x-axis in data.frame
+x1 <- factor(x, levels=x)
+values <- c(y_2017, y_2018)
+type <-c(rep("2017", 12), rep("2018", 12))
+dl <- data.frame(x1,values)
+
+# load in `ggplot2`
+install.packages("ggplot2")
+library(ggplot2)
+p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Number of completed files downloaded per month") + theme_bw()
+p
+ggsave("montly_dl.png", width=8, dpi=100)
 
 
 ##########dissecting data for analysis##########
 
 # data in 2017
-log_data_2017 <- complete_log_data[which(complete_log_data$yy == "2017"),]
+log_data_2017 <- pub_complete_log_data[which(pub_complete_log_data$yy == "2017"),]
 
-##########data in 2017 Apr##############
-log_data_2017Apr <- log_data_2017[which(log_data_2017$mm =="Apr"),]
+##########data in 2017 Dec##############
+log_data_2017Dec <- log_data_2017[which(log_data_2017$mm =="12"),]
 
-# to count the row contain "10.5524"
-sum(grepl("10.5524",log_data_2017Apr$doi))
+
+# to count the row contain "/pub"
+sum(grepl("/pub",log_data_2017Dec$doi))
 
 # separate the doi value
 install.packages("stringr")
 library(stringr)
-doi_log_data_2017Apr <- str_split_fixed(log_data_2017Apr$doi, "/", 6)
-colnames(doi_log_data_2017Apr) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
+doi_log_data_2017Dec <- str_split_fixed(log_data_2017Dec$doi, "/", 6)
+colnames(doi_log_data_2017Dec) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
 
 # switch matrix to a data frame
-doi2_log_data_2017Apr <- as.data.frame(doi_log_data_2017Apr)
+doi2_log_data_2017Dec <- as.data.frame(doi_log_data_2017Dec)
 
 # Top list for folder download
-test_2017Apr <- table(doi2_log_data_2017Apr$V2)
-test_2017Apr <- as.data.frame(test_2017Apr)
-head(test_2017Apr[order(-test_2017Apr$Freq),],10)
+Freq_2017Dec <- table(doi2_log_data_2017Dec$doi2)
+Freq_2017Dec <- as.data.frame(Freq_2017Dec)
+head(Freq_2017Dec[order(-Freq_2017Dec$Freq),],10)
+
+top10pub <- function(month,year){
+  log_data_year_month <- pub_complete_log_data[which(pub_complete_log_data$yy == year & pub_complete_log_data$mm == month),]
+  library(stringr)
+  doi_log_data_year_month <- str_split_fixed(log_data_year_month$doi, "/", 6)
+  colnames(doi_log_data_year_month) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
+  doi2_log_data_year_month <- as.data.frame(doi_log_data_year_month)
+  # Top 10 list for folder download
+  Freq_year_month <- table(doi2_log_data_year_month$doi2)
+  Freq_year_month <- as.data.frame(Freq_year_month)
+  Freq_year_month <- head(Freq_year_month[order(-Freq_year_month$Freq),],10)
+  return(Freq_year_month)
+}
+  
+  
+
+
 
 # Top list for publication
 freq_doi_2017Apr <- table(doi2_log_data_2017Apr$doi2)
@@ -86,35 +140,7 @@ freq_doi_2017Apr <- as.data.frame(freq_doi_2017Apr)
 head(freq_doi_2017Apr[order(-freq_doi_2017Apr$Freq),],10)
 
 
-# create a function to count no. of row per month
-count_no <-function(month,year){
-# sum(mm_factor =='Feb')
-# change the value to factor for counting
-mm_factor <- factor(complete_log_data$mm)
-count_month <- sum(mm_factor == month & complete_log_data$yy == year)
-return(count_month)
-}
 
-
-# data between 2017 and 2018
-y_2018 <- c(count_no('Jan', 2018), count_no('Feb', 2018), count_no('Mar', 2018), count_no('Apr', 2018), count_no('May', 2018), count_no('Jun', 2018), count_no('Jul',2018), count_no('Aug',2018), count_no('Sep',2018), count_no('Oct',2018), count_no('Nov',2018), count_no('Dec',2018))
-y_2017 <- c(count_no('Jan', 2017), count_no('Feb', 2017), count_no('Mar', 2017), count_no('Apr', 2017), count_no('May', 2017), count_no('Jun', 2017), count_no('Jul',2017), count_no('Aug',2017), count_no('Sep',2017), count_no('Oct',2017), count_no('Nov',2017), count_no('Dec',2017))
-
-# assign the label of x-axis
-x <- rep(c("Jan", "Feb", "Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec"))
-
-# to keep the order of x-axis in data.frame
-x1 <- factor(x, levels=x)
-values <- c(y_2017, y_2018)
-type <-c(rep("2017", 12), rep("2018", 12))
-dl <- data.frame(x1,values)
-
-# load in `ggplot2`
-install.packages("ggplot2")
-library(ggplot2)
-p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Number of completed files downloaded per month") + theme_bw()
-p
-ggsave("montly_dl.png", width=8, dpi=100)
 
 ##########generate country names of ip using rgeolocate##########
 install.packages("rgeolocate")
