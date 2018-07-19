@@ -28,6 +28,23 @@ library(dplyr)
 
 pub_complete_log_data <- complete_log_data %>% filter(str_detect(complete_log_data$doi, "/pub"))
 
+###########Top 10 publication##########
+library(stringr)
+doi_pub_complete_log_data <- str_split_fixed(pub_complete_log_data$doi, "/", 6)
+colnames(doi_pub_complete_log_data) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
+doi2_pub_complete_log_data <- as.data.frame(doi_pub_complete_log_data)
+count_pub <- table(doi2_pub_complete_log_data$doi2)
+count_pub <- as.data.frame(top10pub)
+top10pub <-head(count_pub[order(-count_pub$Freq),],10)
+
+# doi matching
+install.packages("rcrossref")
+library(rcrossref)
+doi_base <- "10.5524"
+doi_url <- data.frame(paste(doi_base,top10pub$Var1,sep="/"))
+colnames(doi_url) <- c ('doi')
+doi_url_list <- cr_cn(dois = doi_url$doi, "text", "apa")
+
 ##########monthly download##########
 
 # merging year, month and day, display with the date format
@@ -73,7 +90,7 @@ ggsave("montly_dl.png", width=8, dpi=100)
 # sum(grepl("/pub",log_data_2017Dec$doi))
 
 # Create a function to find the popular dataset by year and month
-top10pub <- function(month,year){
+top10pub_year_month <- function(month,year){
   
   # locate the data with corresponding year and month
   log_data_year_month <- pub_complete_log_data[which(pub_complete_log_data$yy == year & pub_complete_log_data$mm == month),]
@@ -100,10 +117,10 @@ library(rgeolocate)
 ipmmdb <- system.file("extdata","GeoLite2-Country.mmdb", package = "rgeolocate")
 
 # matching country ip
-complete_ip_country <- maxmind(complete_log_data$ip, ipmmdb,"country_name")
+complete_ip_country <- maxmind(pub_complete_log_data$ip, ipmmdb,"country_name")
 
 # match result
-complete_country_list <- data.frame(complete_log_data$ip, complete_ip_country)
+complete_country_list <- data.frame(pub_complete_log_data$ip, complete_ip_country)
 
 ip_result <- data.frame(table(complete_ip_country))
 
@@ -112,11 +129,11 @@ install.packages("plyr")
 library(plyr)
 
 count(complete_country_list$country_name == "NA")
-# 3673 entries are NA using rgeolocate package
+# 3028 entries are NA using rgeolocate package
 
 # display the entries that country name is NA
 na_ip_url <- complete_country_list[complete_country_list$country_name %in% NA,]
-na_ip <-na_ip_url$complete_log_data.ip
+na_ip <-na_ip_url$pub_complete_log_data.ip
 group_na_ip <- count(na_ip)
 
 ##########generate country names of NA ip using API##########
