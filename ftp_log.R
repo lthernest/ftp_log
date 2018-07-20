@@ -80,8 +80,9 @@ dl <- data.frame(x1,values)
 # load in `ggplot2`
 install.packages("ggplot2")
 library(ggplot2)
-p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Number of completed files downloaded per month") + theme_bw()
+p <-ggplot(dl, aes(x1, values)) + geom_bar(stat = "identity", position=position_dodge(), aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Monthly completed downloads") + theme_bw()
 p
+
 ggsave("montly_dl.png", width=8, dpi=100)
 
 
