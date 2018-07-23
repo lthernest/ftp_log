@@ -343,7 +343,7 @@ for(i in seq_along(incomplete_url))
   country_vec <- c(country_vec, get_country_text)
 }
 incomplete_list <- data.frame(top10_incomplete_china_ip,country_vec)
-
+#colnames(incomplete_list$country_vec) <- c(ip_value)
 return(incomplete_list)
 }
 
