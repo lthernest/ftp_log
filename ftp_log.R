@@ -321,34 +321,66 @@ incomplete_log_data_china <- incomplete_log_data_ip_country[which(incomplete_log
 incomplete_china_ip <- data.frame(table(incomplete_log_data_china$ip))
 top10_incomplete_china_ip <- head(incomplete_china_ip[order(-incomplete_china_ip$Freq),],10)
 
-file <- system.file("extdata","ip2_sample.bin", package = "rgeolocate")
-maxmind(top10_incomplete_china_ip$Var1, ipmmdb,"country_name")
-ip2location(top10_incomplete_china_ip$Var1, file,"country_name")
-summary(incomplete_log_data_china$size)
+###############function to retrieve ip value############## 
+# ip_value: "region", "org"
+ip_retrieve <- function (ip_list, ip_value){
 
+base <- "https://ipapi.co"
+incomplete_url <- paste(base,ip_list,ip_value, sep="/")
+
+# creating an empty vector for collecting the country names
+country_vec <- c()
+get_country_text <- c()
+
+# running a for loop to parse country names for each IP
+for(i in seq_along(incomplete_url))
+{
+  # retrieve the the country name from URL
+  get_country <- GET(incomplete_url[i])
+  get_country_text <- content(get_country,"text")
+  # pause 1s for each GET
+  Sys.sleep(1)
+  country_vec <- c(country_vec, get_country_text)
+}
+incomplete_list <- data.frame(top10_incomplete_china_ip,country_vec)
+
+return(incomplete_list)
+}
+
+ip_61.158.132.17 <- incomplete_log_data_china[which(incomplete_log_data_china$ip == "61.158.132.17"),]
+table(droplevels(ip_61.158.132.17$mm))
+table(droplevels(ip_61.158.132.17$doi))
+# ip = 61.158.132.17 is downloading the same file 713,087 times in Apr.
+
+ip_119.84.114.22 <- incomplete_log_data_china[which(incomplete_log_data_china$ip == "119.84.114.22"),]
+table(droplevels(ip_119.84.114.22$mm))
+table(droplevels(ip_119.84.114.22$doi))
+# ip = 119.84.114.22 is downloading the same file 500,495 in Apr.
+      
 ################incompletet monthly donwload (China)####################
 # create a function to count no. of row per month
 count_no_china <-function(month,year){
   
   # change the value to factor for counting
   mm_factor_china <- factor(incomplete_log_data_china$mm)
-  count_month_china <- sum(mm_factor == month & incomplete_log_data_china$yy == year)
+  count_month_china <- sum(mm_factor_china == month & incomplete_log_data_china$yy == year)
   return(count_month_china)
 }
 
 # data between 2017 and 2018
-y_china_2018 <- c(count_no('1', 2018), count_no('2', 2018), count_no('3', 2018), count_no('4', 2018), count_no('5', 2018), count_no('6', 2018), count_no('7',2018), count_no('8',2018), count_no('9',2018), count_no('10',2018), count_no('11',2018), count_no('12',2018))
-y_china_2017 <- c(count_no('1', 2017), count_no('2', 2017), count_no('3', 2017), count_no('4', 2017), count_no('5', 2017), count_no('6', 2017), count_no('7',2017), count_no('8',2017), count_no('9',2017), count_no('10',2017), count_no('11',2017), count_no('12',2017))
+y_china_2018 <- c(count_no_china('1', 2018), count_no_china('2', 2018), count_no_china('3', 2018), count_no_china('4', 2018), count_no_china('5', 2018), count_no_china('6', 2018), count_no_china('7',2018), count_no_china('8',2018), count_no_china('9',2018), count_no_china('10',2018), count_no_china('11',2018), count_no_china('12',2018))
+y_china_2017 <- c(count_no_china('1', 2017), count_no_china('2', 2017), count_no_china('3', 2017), count_no_china('4', 2017), count_no_china('5', 2017), count_no_china('6', 2017), count_no_china('7',2017), count_no_china('8',2017), count_no_china('9',2017), count_no_china('10',2017), count_no_china('11',2017), count_no_china('12',2017))
 
 # assign the label of x-axis
 x <- rep(c("Jan", "Feb", "Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec"))
 
 # to keep the order of x-axis in data.frame
 x1 <- factor(x, levels=x)
-values <- c(y_2017, y_2018)
+values <- c(y_china_2017, y_china_2018)
 type <-c(rep("2017", 12), rep("2018", 12))
 dl_china <- data.frame(x1,values)
 
+library(ggplot2)
 p_china <-ggplot(dl_china, aes(x1, values)) + geom_bar(stat = "identity", position=position_dodge(), aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Monthly incomplete downloads") + theme_bw()
 p_china
 
