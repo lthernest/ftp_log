@@ -359,6 +359,9 @@ table(droplevels(ip_119.84.114.22$doi))
       
 ################incompletet monthly donwload (China)####################
 # create a function to count no. of row per month
+
+incomplete_log_data_china$mm <- match(incomplete_log_data_china$mm,month.abb)
+
 count_no_china <-function(month,year){
   
   # change the value to factor for counting
