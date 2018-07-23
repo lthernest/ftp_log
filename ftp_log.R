@@ -300,13 +300,55 @@ plot(gvismap)
 print(gvismap)
 
 ##########list for incomplete download##########
+installed.packages("rgeolocate")
+library(rgeolocate)
+ipmmdb <- system.file("extdata","GeoLite2-Country.mmdb", package = "rgeolocate")
+
 incomplete_log_data <- ip_log_data[which(ip_log_data$fin == "i"),]
 incomplete_ip_country <- maxmind(incomplete_log_data$ip, ipmmdb,"country_name")
 incomplete_country_list <- data.frame(table(incomplete_ip_country))
-
 # show the countries with incomplete download in descending order
 incomplete_country_list[order((incomplete_country_list$Freq), decreasing =TRUE),]
 # China has the most incomplete downloads - 4,046,925
+
+incomplete_log_data_ip_country <- data.frame(incomplete_log_data, incomplete_ip_country)
+incomplete_log_data_china <- incomplete_log_data_ip_country[which(incomplete_log_data_ip_country$country_name == "China"),]
+
+incomplete_china_ip <- data.frame(table(incomplete_log_data_china$ip))
+head(incomplete_china_ip[order(-incomplete_china_ip$Freq),],10)
+
+
+
+################incompletet monthly donwload (China)####################
+# create a function to count no. of row per month
+count_no_china <-function(month,year){
+  
+  # change the value to factor for counting
+  mm_factor_china <- factor(incomplete_log_data_china$mm)
+  count_month_china <- sum(mm_factor == month & incomplete_log_data_china$yy == year)
+  return(count_month_china)
+}
+
+
+# data between 2017 and 2018
+y_china_2018 <- c(count_no('1', 2018), count_no('2', 2018), count_no('3', 2018), count_no('4', 2018), count_no('5', 2018), count_no('6', 2018), count_no('7',2018), count_no('8',2018), count_no('9',2018), count_no('10',2018), count_no('11',2018), count_no('12',2018))
+y_china_2017 <- c(count_no('1', 2017), count_no('2', 2017), count_no('3', 2017), count_no('4', 2017), count_no('5', 2017), count_no('6', 2017), count_no('7',2017), count_no('8',2017), count_no('9',2017), count_no('10',2017), count_no('11',2017), count_no('12',2017))
+
+# assign the label of x-axis
+x <- rep(c("Jan", "Feb", "Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec"))
+
+# to keep the order of x-axis in data.frame
+x1 <- factor(x, levels=x)
+values <- c(y_2017, y_2018)
+type <-c(rep("2017", 12), rep("2018", 12))
+dl_china <- data.frame(x1,values)
+
+p_china <-ggplot(dl_china, aes(x1, values)) + geom_bar(stat = "identity", position=position_dodge(), aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Monthly incomplete downloads") + theme_bw()
+p_china
+
+ggsave("montly_dl_china.png", width=8, dpi=100)
+
+
 
 # export to csv
 write.csv(incomplete_country_list, file="incomplete_country_list.csv")
