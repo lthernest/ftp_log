@@ -350,15 +350,9 @@ return(incomplete_list)
 
 top10_incomplete_china_ip_list <- data.frame((top10_incomplete_china_ip), ip_retrieve(top10_incomplete_china_ip$Var1, "org"), (ip_retrieve(top10_incomplete_china_ip$Var1, "region")))
 
-
 check_incomplete_ip <- function (ip_list){
-  
   ip_variable <- incomplete_log_data_china[which(incomplete_log_data_china$ip == ip_list),]
-  check_incomplete_month_vec <- table(droplevels(ip_variable$mm)) 
-  
-  #check_incomplete_doi_vec <- table(droplevels(ip_variable$doi))
-  check_result <- data.frame(check_incomplete_month_vec)
-
+  check_result <- data.frame(table(droplevels(ip_variable$mm)),table(droplevels(ip_variable$doi)))
   return(check_result)
 
 }
