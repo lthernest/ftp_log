@@ -322,6 +322,7 @@ incomplete_china_ip <- data.frame(table(incomplete_log_data_china$ip))
 top10_incomplete_china_ip <- head(incomplete_china_ip[order(-incomplete_china_ip$Freq),],10)
 
 ###############function to retrieve ip value############## 
+library("httr")
 # ip_value: "region", "org"
 ip_retrieve <- function (ip_list, ip_value){
 
@@ -342,9 +343,24 @@ for(i in seq_along(incomplete_url))
   Sys.sleep(1)
   country_vec <- c(country_vec, get_country_text)
 }
-incomplete_list <- data.frame(top10_incomplete_china_ip,country_vec)
-#colnames(incomplete_list$country_vec) <- c(ip_value)
+incomplete_list <- data.frame(country_vec)
+colnames(incomplete_list) <- c(ip_value)
 return(incomplete_list)
+}
+
+top10_incomplete_china_ip_list <- data.frame((top10_incomplete_china_ip), ip_retrieve(top10_incomplete_china_ip$Var1, "org"), (ip_retrieve(top10_incomplete_china_ip$Var1, "region")))
+
+
+check_incomplete_ip <- function (ip_list){
+  
+  ip_variable <- incomplete_log_data_china[which(incomplete_log_data_china$ip == ip_list),]
+  check_incomplete_month_vec <- table(droplevels(ip_variable$mm)) 
+  
+  #check_incomplete_doi_vec <- table(droplevels(ip_variable$doi))
+  check_result <- data.frame(check_incomplete_month_vec)
+
+  return(check_result)
+
 }
 
 ip_61.158.132.17 <- incomplete_log_data_china[which(incomplete_log_data_china$ip == "61.158.132.17"),]
