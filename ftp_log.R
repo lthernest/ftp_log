@@ -349,28 +349,15 @@ return(incomplete_list)
 }
 
 top10_incomplete_china_ip_list <- data.frame((top10_incomplete_china_ip), ip_retrieve(top10_incomplete_china_ip$Var1, "org"), (ip_retrieve(top10_incomplete_china_ip$Var1, "region")))
+colnames(top10_incomplete_china_ip_list) <- c("ip", "freq", "organization", "region")
 
-check_incomplete_ip <- function (ip_list){
-  
-  for(i in seq_along(ip_list)){
-  ip_variable[i] <- incomplete_log_data_china[which(incomplete_log_data_china$ip == ip_list),]
-  
-  check_result <- data.frame(table(droplevels(ip_variable[i]$mm)),table(droplevels(ip_variable[i]$doi)))
-  }
-  return(check_result)
+ip_variable <- top10_incomplete_china_ip_list$Var1
+ip_variable_list <- incomplete_log_data_china[incomplete_log_data_china$ip %in% ip_variable,]
+ip_aggregate <- aggregate(rep(1, nrow(ip_variable_list)), by = list(ip = ip_variable_list$ip, doi = ip_variable_list$doi, mm = ip_variable_list$mm), sum)
+final_incomplete_ip_list <- merge(top10_incomplete_china_ip_list, ip_aggregate, by="ip")
+final_incomplete_ip_list <-head(final_incomplete_ip_list[order(-final_incomplete_ip_list$x),],10)
 
-}
 
-ip_61.158.132.17 <- incomplete_log_data_china[which(incomplete_log_data_china$ip == "61.158.132.17"),]
-table(droplevels(ip_61.158.132.17$mm))
-table(droplevels(ip_61.158.132.17$doi))
-# ip = 61.158.132.17 is downloading the same file 713,087 times in Apr.
-
-ip_119.84.114.22 <- incomplete_log_data_china[which(incomplete_log_data_china$ip == "119.84.114.22"),]
-table(droplevels(ip_119.84.114.22$mm))
-table(droplevels(ip_119.84.114.22$doi))
-# ip = 119.84.114.22 is downloading the same file 500,495 in Apr.
-      
 ################incompletet monthly donwload (China)####################
 # create a function to count no. of row per month
 
