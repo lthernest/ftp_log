@@ -34,7 +34,7 @@ doi_pub_complete_log_data <- str_split_fixed(pub_complete_log_data$doi, "/", 6)
 colnames(doi_pub_complete_log_data) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
 doi2_pub_complete_log_data <- as.data.frame(doi_pub_complete_log_data)
 count_pub <- table(doi2_pub_complete_log_data$doi2)
-count_pub <- as.data.frame(top10pub)
+count_pub <- as.data.frame(count_pub)
 top10pub <-head(count_pub[order(-count_pub$Freq),],10)
 
 # doi matching
@@ -325,27 +325,27 @@ top10_incomplete_china_ip <- head(incomplete_china_ip[order(-incomplete_china_ip
 library("httr")
 # ip_value: "region", "org"
 ip_retrieve <- function (ip_list, ip_value){
-
-base <- "https://ipapi.co"
-incomplete_url <- paste(base,ip_list,ip_value, sep="/")
-
-# creating an empty vector for collecting the country names
-country_vec <- c()
-get_country_text <- c()
-
-# running a for loop to parse country names for each IP
-for(i in seq_along(incomplete_url))
-{
-  # retrieve the the country name from URL
-  get_country <- GET(incomplete_url[i])
-  get_country_text <- content(get_country,"text")
-  # pause 1s for each GET
-  Sys.sleep(1)
-  country_vec <- c(country_vec, get_country_text)
-}
-incomplete_list <- data.frame(country_vec)
-colnames(incomplete_list) <- c(ip_value)
-return(incomplete_list)
+  
+  base <- "https://ipapi.co"
+  incomplete_url <- paste(base,ip_list,ip_value, sep="/")
+  
+  # creating an empty vector for collecting the country names
+  country_vec <- c()
+  get_country_text <- c()
+  
+  # running a for loop to parse country names for each IP
+  for(i in seq_along(incomplete_url))
+  {
+    # retrieve the the country name from URL
+    get_country <- GET(incomplete_url[i])
+    get_country_text <- content(get_country,"text")
+    # pause 1s for each GET
+    Sys.sleep(1)
+    country_vec <- c(country_vec, get_country_text)
+  }
+  incomplete_list <- data.frame(country_vec)
+  colnames(incomplete_list) <- c(ip_value)
+  return(incomplete_list)
 }
 
 top10_incomplete_china_ip_list <- data.frame((top10_incomplete_china_ip), ip_retrieve(top10_incomplete_china_ip$Var1, "org"), (ip_retrieve(top10_incomplete_china_ip$Var1, "region")))
@@ -385,7 +385,7 @@ type <-c(rep("2017", 12), rep("2018", 12))
 dl_china <- data.frame(x1,values)
 
 library(ggplot2)
-p_china <-ggplot(dl_china, aes(x1, values)) + geom_bar(stat = "identity", position=position_dodge(), aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Monthly incomplete downloads") + theme_bw()
+p_china <-ggplot(dl_china, aes(x1, values)) + geom_bar(stat = "identity", position=position_dodge(), aes(fill = type)) + xlab("Month") + ylab("Freq") + ggtitle("Monthly incomplete downloads in China") + theme_bw()
 p_china
 
 ggsave("montly_dl_china.png", width=8, dpi=100)
