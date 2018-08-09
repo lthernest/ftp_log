@@ -45,6 +45,23 @@ doi_url <- data.frame(paste(doi_base,top10pub$Var1,sep="/"))
 colnames(doi_url) <- c ('doi')
 doi_url_list <- cr_cn(dois = doi_url$doi, "text", "apa")
 
+###########breakdown by top 10 datasets##########
+top10_data_list <- data.frame(pub_complete_log_data,doi2_pub_complete_log_data, dates)
+top10_list <- top10_data_list[top10_data_list$doi2 %in% top10pub$Var1,]
+
+top10_list_aggregate_dates <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, dates = top10_list$dates), sum)
+
+#check the min date to download
+library(dplyr)
+top10_min_date <- top10_list_aggregate_dates %>% 
+group_by(doi) %>%
+filter(dates == min(dates))
+
+
+top10_list_aggregate <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, yy = top10_list$yy, mm = top10_list$mm), sum)
+
+ggplot(data=top10_list_aggregate, aes(x=mm, y=x, group = doi, colour = doi)) + geom_line() + geom_point( size=4, shape=21, fill="white")
+
 ##########monthly download##########
 
 # merging year, month and day, display with the date format
@@ -199,6 +216,8 @@ plot(gvismap)
 #export the html coding
 print(gvismap)
 
+
+
 ##########list for incomplete download##########
 incomplete_log_data <- ip_log_data[which(ip_log_data$fin == "i"),]
 incomplete_ip_country <- maxmind(incomplete_log_data$ip, ipmmdb,"country_name")
@@ -213,46 +232,14 @@ write.csv(incomplete_country_list, file="incomplete_country_list.csv")
 ggsave("montly_dl.png", width=8, dpi=100)
 
 
-###############function to retrieve ip value############## 
-library("httr")
-# ip_value: "region", "org"
-ip_retrieve <- function (ip_list, ip_value){
-  
-  base <- "https://ipapi.co"
-  incomplete_url <- paste(base,ip_list,ip_value, sep="/")
-  
-  # creating an empty vector for collecting the country names
-  country_vec <- c()
-  get_country_text <- c()
-  
-  # running a for loop to parse country names for each IP
-  for(i in seq_along(incomplete_url))
-  {
-    # retrieve the the country name from URL
-    get_country <- GET(incomplete_url[i])
-    get_country_text <- content(get_country,"text")
-    # pause 1s for each GET
-    Sys.sleep(1)
-    country_vec <- c(country_vec, get_country_text)
-  }
-  incomplete_list <- data.frame(country_vec)
-  colnames(incomplete_list) <- c(ip_value)
-  return(incomplete_list)
-}
+################incomplete monthly donwload (China)####################
 
-top10_incomplete_china_ip_list <- data.frame((top10_incomplete_china_ip), ip_retrieve(top10_incomplete_china_ip$Var1, "org"), (ip_retrieve(top10_incomplete_china_ip$Var1, "region")))
-colnames(top10_incomplete_china_ip_list) <- c("ip", "freq", "organization", "region")
-
-ip_variable <- top10_incomplete_china_ip_list$Var1
-ip_variable_list <- incomplete_log_data_china[incomplete_log_data_china$ip %in% ip_variable,]
-ip_aggregate <- aggregate(rep(1, nrow(ip_variable_list)), by = list(ip = ip_variable_list$ip, doi = ip_variable_list$doi, mm = ip_variable_list$mm), sum)
-final_incomplete_ip_list <- merge(top10_incomplete_china_ip_list, ip_aggregate, by="ip")
-final_incomplete_ip_list <-head(final_incomplete_ip_list[order(-final_incomplete_ip_list$x),],10)
+incomplete_log_data_ip_country <- data.frame(incomplete_log_data, incomplete_ip_country)
+incomplete_log_data_china <- incomplete_log_data_ip_country[which(incomplete_log_data_ip_country$country_name == "China"),]
 
 
-################incompletet monthly donwload (China)####################
+################Bar chart for monthly incomplete donwloads in China####################
 # create a function to count no. of row per month
-
 incomplete_log_data_china$mm <- match(incomplete_log_data_china$mm,month.abb)
 
 count_no_china <-function(month,year){
@@ -282,6 +269,53 @@ p_china
 
 ggsave("montly_dl_china.png", width=8, dpi=100)
 
+###############Top 10 incomplete ip address and its value##############
+incomplete_china_ip <- data.frame(table(incomplete_log_data_china$ip))
+top10_incomplete_china_ip <- head(incomplete_china_ip[order(-incomplete_china_ip$Freq),],10)
 
-# export to csv
-write.csv(incomplete_country_list, file="incomplete_country_list.csv")
+#function to retrieve ip value
+library("httr")
+# ip_value: "region", "org"
+ip_retrieve <- function (ip_list, ip_value){
+  
+  base <- "https://ipapi.co"
+  incomplete_url <- paste(base,ip_list,ip_value, sep="/")
+  
+  # creating an empty vector for collecting the country names
+  country_vec <- c()
+  get_country_text <- c()
+  
+  # running a for loop to parse country names for each IP
+  for(i in seq_along(incomplete_url))
+  {
+    # retrieve the the country name from URL
+    get_country <- GET(incomplete_url[i])
+    get_country_text <- content(get_country,"text")
+    # pause 1s for each GET
+    Sys.sleep(1)
+    country_vec <- c(country_vec, get_country_text)
+  }
+  incomplete_list <- data.frame(country_vec)
+  colnames(incomplete_list) <- c(ip_value)
+  return(incomplete_list)
+}
+
+top10_incomplete_china_ip_list <- data.frame((top10_incomplete_china_ip), ip_retrieve(top10_incomplete_china_ip$Var1, "org"), (ip_retrieve(top10_incomplete_china_ip$Var1, "region")))
+colnames(top10_incomplete_china_ip_list) <- c("ip", "freq", "organization", "region")
+
+ip_variable <- top10_incomplete_china_ip_list$ip
+ip_variable_list <- incomplete_log_data_china[incomplete_log_data_china$ip %in% ip_variable,]
+
+
+
+#aggregate with doi and no. of accessing
+file_size <- as.numeric(ip_variable_list$size)
+file_size_aggregate <- aggregate(file_size, list(ip_variable_list$ip), max)
+colnames(file_size_aggregate) <- c("ip","size")
+
+ip_aggregate <- aggregate(rep(1, nrow(ip_variable_list)), by = list(ip = ip_variable_list$ip, doi = ip_variable_list$doi, mm = ip_variable_list$mm), sum)
+
+#merge datasets
+library(reshape)
+final_incomplete_ip_list <- merge_recurse(list(top10_incomplete_china_ip_list, ip_aggregate, file_size_aggregate))
+final_incomplete_ip_list <- head(final_incomplete_ip_list[order(-final_incomplete_ip_list$x),],10)
