@@ -51,7 +51,7 @@ top10_list <- top10_data_list[top10_data_list$doi2 %in% top10pub$Var1,]
 
 top10_list_aggregate_dates <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, dates = top10_list$dates), sum)
 
-#check the min date to download
+# check the min date to download
 library(dplyr)
 top10_min_date <- top10_list_aggregate_dates %>% 
 group_by(doi) %>%
@@ -59,7 +59,7 @@ filter(dates == min(dates))
 pd <- c("2014-06-30", "2014-12-17", "2014-05-16", "2013-07-22", "2016-09-09", "2015-11-24", "2015-03-25", "2015-02-16", "2016-11-14", "2017-06-12")
 top10_date <- data.frame(top10_min_date,pd)
 
-#publish date minus first download
+# publish date minus first download
 time_diff <- as.Date(top10_date$dates) - as.Date(top10_date$pd)
 
 top10_list_aggregate <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, yy = top10_list$yy, mm = top10_list$mm), sum)
