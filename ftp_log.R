@@ -45,11 +45,32 @@ doi_url <- data.frame(paste(doi_base,top10pub$Var1,sep="/"))
 colnames(doi_url) <- c ('doi')
 doi_url_list <- cr_cn(dois = doi_url$doi, "text", "apa")
 
-###########breakdown by top 10 datasets##########
+###########average period of download before release(all datasets)##########
+list_combine_dates <- data.frame(doi2_pub_complete_log_data$doi2, dates)
+
+library(dplyr)
+list_combine_min_dates <- list_combine_dates %>% 
+group_by(doi2_pub_complete_log_data.doi2) %>%
+filter(dates == min(dates))
+
+list_min_dates_aggregate <- aggregate(rep(1, nrow(list_combine_min_dates)), by = list(doi = list_combine_min_dates$doi2_pub_complete_log_data.doi2, dates = list_combine_min_dates$dates), sum) 
+dataset_date <- read.table("dataset_date", header = FALSE, fill = TRUE, sep = '|')
+colnames(dataset_date) <- c("doi", "publish date")
+
+list_min_publish_dates <- merge(list_min_dates_aggregate, dataset_date, by = "doi")
+
+time_diff_all <- as.Date(list_min_publish_dates$dates) - as.Date(list_min_publish_dates$`publish date`)
+
+mean(time_diff_all)
+
+
+###########average period of download before release(top 10 popular datasets)##########
+
 top10_data_list <- data.frame(pub_complete_log_data,doi2_pub_complete_log_data, dates)
 top10_list <- top10_data_list[top10_data_list$doi2 %in% top10pub$Var1,]
-
 top10_list_aggregate_dates <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, dates = top10_list$dates), sum)
+
+####doi_aggregate <- aggregate(file_size, list(doi2_pub_complete_log_data$doi2), max)
 
 # check the min date to download
 library(dplyr)
@@ -61,14 +82,13 @@ top10_date <- data.frame(top10_min_date,pd)
 
 # publish date minus first download
 time_diff <- as.Date(top10_date$dates) - as.Date(top10_date$pd)
+mean(time_diff)
+
 
 top10_list_aggregate <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, yy = top10_list$yy, mm = top10_list$mm), sum)
-
-
 ggplot(data=top10_list_aggregate, aes(x=mm, y=x, group = doi, colour = doi)) + geom_line() + geom_point( size=4, shape=21, fill="white")
 
 ##########monthly download##########
-
 # merging year, month and day, display with the date format
 dates <-as.Date(paste(pub_complete_log_data$yy, pub_complete_log_data$mm, pub_complete_log_data$dd, sep="-"), format="%Y-%m-%d")
 
