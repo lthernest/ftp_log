@@ -63,14 +63,10 @@ time_diff_all <- as.Date(list_min_publish_dates$dates) - as.Date(list_min_publis
 
 mean(time_diff_all)
 
-
 ###########average period of download before release(top 10 popular datasets)##########
-
 top10_data_list <- data.frame(pub_complete_log_data,doi2_pub_complete_log_data, dates)
 top10_list <- top10_data_list[top10_data_list$doi2 %in% top10pub$Var1,]
 top10_list_aggregate_dates <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, dates = top10_list$dates), sum)
-
-####doi_aggregate <- aggregate(file_size, list(doi2_pub_complete_log_data$doi2), max)
 
 # check the min date to download
 library(dplyr)
@@ -85,8 +81,17 @@ time_diff <- as.Date(top10_date$dates) - as.Date(top10_date$pd)
 mean(time_diff)
 
 
-top10_list_aggregate <- aggregate(rep(1, nrow(top10_list)), by = list(doi = top10_list$doi2, yy = top10_list$yy, mm = top10_list$mm), sum)
-ggplot(data=top10_list_aggregate, aes(x=mm, y=x, group = doi, colour = doi)) + geom_line() + geom_point( size=4, shape=21, fill="white")
+###########Monthly download by top 10 popular datasets##########
+#set the local time to English
+Sys.setlocale("LC_TIME", "English")
+
+top10_list_aggregate_dates$Year <- format(top10_list_aggregate_dates$dates, "%Y")
+top10_list_aggregate_dates$Month <- format(top10_list_aggregate_dates$dates, "%b")
+top10_list_aggregate_dates$Day <- format(top10_list_aggregate_dates$dates, "%d")
+
+top10_list_aggregate_dates$MonthDay <- format(top10_list_aggregate_dates$dates, "%d-%b")
+
+ggplot(data = top10_list_aggregate_dates, mapping = aes(x = Month, y = x, shape = Year, colour = doi)) + geom_point() + geom_line() + facet_grid(facets = Year ~ .) + scale_x_discrete(limits = month.abb)+ ylab("Freq") + ggtitle("Monthly completed downloads by Top 10 popular datasets")
 
 ##########monthly download##########
 # merging year, month and day, display with the date format
@@ -238,7 +243,7 @@ library(googleVis)
 gvismap <- gvisGeoChart(total_ip_result, locationvar = "total_ip$complete_ip_country", colorvar="Freq", options=list(width="80%", height="80%"))
 plot(gvismap)
 
-#export the html coding
+# export the html coding
 print(gvismap)
 
 
@@ -330,8 +335,6 @@ colnames(top10_incomplete_china_ip_list) <- c("ip", "freq", "organization", "reg
 
 ip_variable <- top10_incomplete_china_ip_list$ip
 ip_variable_list <- incomplete_log_data_china[incomplete_log_data_china$ip %in% ip_variable,]
-
-
 
 #aggregate with doi and no. of accessing
 file_size <- as.numeric(ip_variable_list$size)
