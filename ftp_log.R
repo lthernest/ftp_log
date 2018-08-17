@@ -80,7 +80,6 @@ top10_date <- data.frame(top10_min_date,pd)
 time_diff <- as.Date(top10_date$dates) - as.Date(top10_date$pd)
 mean(time_diff)
 
-
 ###########Monthly download by top 10 popular datasets##########
 #set the local time to English
 Sys.setlocale("LC_TIME", "English")
@@ -91,7 +90,7 @@ top10_list_aggregate_dates$Day <- format(top10_list_aggregate_dates$dates, "%d")
 
 top10_list_aggregate_dates$MonthDay <- format(top10_list_aggregate_dates$dates, "%d-%b")
 
-ggplot(data = top10_list_aggregate_dates, mapping = aes(x = Month, y = x, shape = Year, colour = doi)) + geom_point() + geom_line() + facet_grid(facets = Year ~ .) + scale_x_discrete(limits = month.abb)+ ylab("Freq") + ggtitle("Monthly completed downloads by Top 10 popular datasets")
+ggplot(data = top10_list_aggregate_dates, mapping = aes(x = Month, y = x, shape = Year, colour = doi)) + geom_point() + geom_line() + facet_grid(facets = Year ~ .) + scale_x_discrete(limits = month.abb)+ ylab("Freq") + ggtitle("Monthly completed downloads by top 10 popular datasets")
 
 ##########monthly download##########
 # merging year, month and day, display with the date format
