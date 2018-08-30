@@ -28,11 +28,15 @@ library(dplyr)
 
 pub_complete_log_data <- complete_log_data %>% filter(str_detect(complete_log_data$doi, "/pub"))
 
-###########Top 10 publication##########
+###########doi analysis##########
 library(stringr)
+
+# split the path and get the doi number
 doi_pub_complete_log_data <- str_split_fixed(pub_complete_log_data$doi, "/", 6)
 colnames(doi_pub_complete_log_data) <- c("V1", "V2", "doi1", "V4", "doi2", "V6")
 doi2_pub_complete_log_data <- as.data.frame(doi_pub_complete_log_data)
+
+# top 10 donwload publication
 count_pub <- table(doi2_pub_complete_log_data$doi2)
 count_pub <- as.data.frame(count_pub)
 top10pub <-head(count_pub[order(-count_pub$Freq),],10)
@@ -46,22 +50,44 @@ colnames(doi_url) <- c ('doi')
 doi_url_list <- cr_cn(dois = doi_url$doi, "text", "apa")
 
 ###########average period of download before release(all datasets)##########
+# merging year, month and day, display with the date format
+dates <-as.Date(paste(pub_complete_log_data$yy, pub_complete_log_data$mm, pub_complete_log_data$dd, sep="-"), format="%Y-%m-%d")
+
 list_combine_dates <- data.frame(doi2_pub_complete_log_data$doi2, dates)
 
+# find the earliest date of downlod for the publications
 library(dplyr)
 list_combine_min_dates <- list_combine_dates %>% 
-group_by(doi2_pub_complete_log_data.doi2) %>%
-filter(dates == min(dates))
-
+  group_by(doi2_pub_complete_log_data.doi2) %>%
+  filter(dates == min(dates))
 list_min_dates_aggregate <- aggregate(rep(1, nrow(list_combine_min_dates)), by = list(doi = list_combine_min_dates$doi2_pub_complete_log_data.doi2, dates = list_combine_min_dates$dates), sum) 
-dataset_date <- read.table("dataset_date", header = FALSE, fill = TRUE, sep = '|')
-colnames(dataset_date) <- c("doi", "publish date")
 
-list_min_publish_dates <- merge(list_min_dates_aggregate, dataset_date, by = "doi")
+# read the table containing doi and publish date
+dataset_date <- read.table("dataset_date", header = TRUE, fill = TRUE, sep = '|')
+colnames(dataset_date) <- c("doi", "publish_date")
 
-time_diff_all <- as.Date(list_min_publish_dates$dates) - as.Date(list_min_publish_dates$`publish date`)
+dataset_date$publish_date <- as.Date(dataset_date$publish_date, format= "%Y-%m-%d")
+
+# remove the doi with date > 2018-05-07 
+dataset_date_subset <- subset(dataset_date, publish_date < "2018-05-07")
+
+
+list_min_publish_dates <- merge(list_min_dates_aggregate, dataset_date_subset, by = "doi")
+
+time_diff_all <- as.Date(list_min_publish_dates$dates) - as.Date(list_min_publish_dates$publish_date)
 
 mean(time_diff_all)
+
+###########find the datasets without being donwloaded##########
+doi_without_dl <- data.frame(setdiff(dataset_date_subset$doi, list_min_dates_aggregate$doi))
+
+# doi matching for doi without being downloaded
+install.packages("rcrossref")
+library(rcrossref)
+doi_without_dl_url <- data.frame(paste(doi_base,doi_without_dl$setdiff.dataset_date_subset.doi..list_min_dates_aggregate.doi.,sep="/"))
+colnames(doi_without_dl_url) <- c ('doi')
+doi_without_dl_url_list <- cr_cn(dois = doi_without_dl_url$doi, "text", "apa")
+doi_without_dl_url_list
 
 ###########average period of download before release(top 10 popular datasets)##########
 top10_data_list <- data.frame(pub_complete_log_data,doi2_pub_complete_log_data, dates)
@@ -71,8 +97,8 @@ top10_list_aggregate_dates <- aggregate(rep(1, nrow(top10_list)), by = list(doi 
 # check the min date to download
 library(dplyr)
 top10_min_date <- top10_list_aggregate_dates %>% 
-group_by(doi) %>%
-filter(dates == min(dates))
+  group_by(doi) %>%
+  filter(dates == min(dates))
 pd <- c("2014-06-30", "2014-12-17", "2014-05-16", "2013-07-22", "2016-09-09", "2015-11-24", "2015-03-25", "2015-02-16", "2016-11-14", "2017-06-12")
 top10_date <- data.frame(top10_min_date,pd)
 
@@ -93,8 +119,6 @@ top10_list_aggregate_dates$MonthDay <- format(top10_list_aggregate_dates$dates, 
 ggplot(data = top10_list_aggregate_dates, mapping = aes(x = Month, y = x, shape = Year, colour = doi)) + geom_point() + geom_line() + facet_grid(facets = Year ~ .) + scale_x_discrete(limits = month.abb)+ ylab("Freq") + ggtitle("Monthly completed downloads by top 10 popular datasets")
 
 ##########monthly download##########
-# merging year, month and day, display with the date format
-dates <-as.Date(paste(pub_complete_log_data$yy, pub_complete_log_data$mm, pub_complete_log_data$dd, sep="-"), format="%Y-%m-%d")
 
 # date of the first file download, remove NA value
 min(dates, na.rm=TRUE)
