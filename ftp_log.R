@@ -68,8 +68,8 @@ colnames(dataset_date) <- c("doi", "publish_date")
 
 dataset_date$publish_date <- as.Date(dataset_date$publish_date, format= "%Y-%m-%d")
 
-# remove the doi with date > 2018-05-07 
-dataset_date_subset <- subset(dataset_date, publish_date < "2018-05-07")
+# remove the doi with date between 2017-01-30 and 2018-05-07 
+dataset_date_subset <- subset(dataset_date, publish_date > "2017-01-30" & publish_date < "2018-05-06")
 
 
 list_min_publish_dates <- merge(list_min_dates_aggregate, dataset_date_subset, by = "doi")
@@ -82,7 +82,7 @@ colnames(list_time_diff_all) <- c("doi", "min_dl_date", "pub_date", "avg_dl_time
 
 # distribution curve for the download
 library(ggplot2)
-ggplot(list_time_diff_all, aes(list_time_diff_all$avg_dl_time)) + geom_density(adjust = 1/5) + xlab("period of time") + ggtitle("Distibution of dataset is being downloaded after release")
+ggplot(list_time_diff_all, aes(list_time_diff_all$avg_dl_time)) + geom_density(adjust = 1/5) + xlab("period of time") + ggtitle("Distribution of dataset is being downloaded after release")
 ggsave("distribution.png", width=8, dpi=100)
 
 mean(time_diff_all)
