@@ -76,10 +76,21 @@ list_min_publish_dates <- merge(list_min_dates_aggregate, dataset_date_subset, b
 
 time_diff_all <- as.Date(list_min_publish_dates$dates) - as.Date(list_min_publish_dates$publish_date)
 
+list_time_diff_all <- data.frame(list_min_publish_dates, time_diff_all)
+list_time_diff_all <- list_time_diff_all[,-3]
+colnames(list_time_diff_all) <- c("doi", "min_dl_date", "pub_date", "avg_dl_time")
+
+# distribution curve for the download
+library(ggplot2)
+ggplot(list_time_diff_all, aes(list_time_diff_all$avg_dl_time)) + geom_density(adjust = 1/5) + xlab("period of time") + ggtitle("Distibution of dataset is being downloaded after release")
+ggsave("distribution.png", width=8, dpi=100)
+
 mean(time_diff_all)
 
 ###########find the datasets without being donwloaded##########
 doi_without_dl <- data.frame(setdiff(dataset_date_subset$doi, list_min_dates_aggregate$doi))
+
+dataset_date_subset[dataset_date_subset$doi %in% doi_without_dl$setdiff.dataset_date_subset.doi..list_min_dates_aggregate.doi.,]
 
 # doi matching for doi without being downloaded
 install.packages("rcrossref")
